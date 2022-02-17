@@ -48,6 +48,16 @@ frappe.query_reports["Custom Stock Projected Qty"] = {
 			"options": "Item Category"
 		},
 		{
+			"fieldname":"available_qty",
+			"label": __("Available Qty >"),
+			"fieldtype": "Data"
+		},
+		{
+			"fieldname":"standard_rate",
+			"label": __("Standard Rate <"),
+			"fieldtype": "Data"
+		},
+		{
 			"fieldname":"brand",
 			"label": __("Brand"),
 			"fieldtype": "Link",
