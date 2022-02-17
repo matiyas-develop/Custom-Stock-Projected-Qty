@@ -15,7 +15,7 @@ sudo supervisorctl restart all
 
 /frappe-bench/apps/custom_report$ git pull
 
-/frappe-bench/apps/custom_report$ bench --site <sitename> migrate
+/frappe-bench/apps/custom_report$ bench --site sitename migrate
   
 /frappe-bench/apps/custom_report$ sudo supervisorctl restart all
   
