@@ -171,4 +171,4 @@ def get_item_map(item_code, include_uom,filters):
         item["reorder_levels"] = reorder_levels.get(item.name) or []
         item_map[item.name] = item
 
-    return item_map
+    return item_map    return item_map
