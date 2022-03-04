@@ -2,7 +2,7 @@
 // For license information, please see license.txt
 /* eslint-disable */
 
-frappe.query_reports["Custom Stock Projected Qty"] = {
+frappe.query_reports["Stock Availability Report"] = {
 	"filters": [
 		{
 			"fieldname":"company",
@@ -28,6 +28,7 @@ frappe.query_reports["Custom Stock Projected Qty"] = {
 			"fieldname":"item_code",
 			"label": __("Item"),
 			"fieldtype": "Link",
+			"hidden": 1,
 			"options": "Item",
 			"get_query": function() {
 				return {
@@ -39,6 +40,7 @@ frappe.query_reports["Custom Stock Projected Qty"] = {
 			"fieldname":"item_group",
 			"label": __("Item Group"),
 			"fieldtype": "Link",
+			"hidden": 1,
 			"options": "Item Group"
 		},
 		{
@@ -53,8 +55,13 @@ frappe.query_reports["Custom Stock Projected Qty"] = {
 			"fieldtype": "Data"
 		},
 		{
-			"fieldname":"standard_rate",
-			"label": __("Standard Rate <"),
+			"fieldname":"selling_rate",
+			"label": __("Selling Rate <"),
+			"fieldtype": "Data"
+		},
+		{
+			"fieldname":"s_item_name",
+			"label": __("Item Name"),
 			"fieldtype": "Data"
 		},
 		{
@@ -67,6 +74,7 @@ frappe.query_reports["Custom Stock Projected Qty"] = {
 			"fieldname":"include_uom",
 			"label": __("Include UOM"),
 			"fieldtype": "Link",
+			"hidden": 1,
 			"options": "UOM"
 		}
 	]

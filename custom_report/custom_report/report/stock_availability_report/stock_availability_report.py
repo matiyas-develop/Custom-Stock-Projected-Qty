@@ -13,13 +13,15 @@ from erpnext.stock.utils import (
 )
 
 
+
 def execute(filters=None):
     is_reposting_item_valuation_in_progress()
     filters = frappe._dict(filters or {})
     include_uom = filters.get("include_uom")
     columns = get_columns()
     bin_list = get_bin_list(filters)
-    item_map = get_item_map(filters.get("item_code"), include_uom, filters)
+    item_map = get_item_map(filters.get("item_code"), include_uom,filters)
+    
 
     warehouse_company = {}
     data = []
@@ -40,7 +42,7 @@ def execute(filters=None):
 
         elif filters.item_group and filters.item_group != item.item_group:
             continue
-
+        
         elif filters.item_category and filters.item_category != item.item_category:
             continue
 
@@ -62,15 +64,14 @@ def execute(filters=None):
             bin.item_code, bin.warehouse)
         if reserved_qty_for_pos:
             bin.projected_qty -= reserved_qty_for_pos
+               
 
-        data.append([item.name, item.item_name, item.description, item.standard_rate, item.item_group, item.item_category, item.brand, bin.warehouse,
-                     item.stock_uom, bin.actual_qty, bin.planned_qty, bin.indented_qty, bin.ordered_qty,
-                     bin.reserved_qty, bin.reserved_qty_for_production, bin.reserved_qty_for_sub_contract, reserved_qty_for_pos,
-                     bin.projected_qty, re_order_level, re_order_qty, shortage_qty])
+        data.append([ item.item_name, item.price_list_rate,  bin.valuation_rate, item.item_category, item.brand, bin.warehouse,
+                      bin.actual_qty, bin.ordered_qty, bin.reserved_qty, bin.projected_qty,])
 
         if include_uom:
             conversion_factors.append(item.conversion_factor)
-
+            
     update_included_uom_in_report(
         columns, data, include_uom, conversion_factors)
     return columns, data
@@ -78,46 +79,23 @@ def execute(filters=None):
 
 def get_columns():
     return [
-        {"label": _("Item Code"), "fieldname": "item_code",
-         "fieldtype": "Link", "options": "Item", "width": 140},
+       
         {"label": _("Item Name"), "fieldname": "item_name", "width": 100},
-        {"label": _("Description"),
-         "fieldname": "description", "width": 200},
-        {"label": _("Standard Selling Price"), "fieldname": "standard_rate",
-         "fieldtype": "Link", "options": "Item", "width": 140},
-        {"label": _("Item Group"), "fieldname": "item_group",
-         "fieldtype": "Link", "options": "Item Group", "width": 100},
+        {"label": _("Selling Price"), "fieldname": "price_list_rate",
+         "fieldtype": "Link", "options": "Item Price", "width": 140},
+        {"label": _("Valuation Rate"), "fieldname": "valuation_rate",
+         "fieldtype": "Link", "options": "Bin", "width": 140},
         {"label": _("Item Categories"), "fieldname": "item_category",
          "fieldtype": "Link", "options": "Item Group", "width": 130},
         {"label": _("Brand"), "fieldname": "brand",
          "fieldtype": "Link", "options": "Brand", "width": 100},
         {"label": _("Warehouse"), "fieldname": "warehouse",
-         "fieldtype": "Link", "options": "Warehouse", "width": 120},
-        {"label": _("UOM"), "fieldname": "stock_uom",
-         "fieldtype": "Link", "options": "UOM", "width": 100},
+         "fieldtype": "Link", "options": "Warehouse","hidden":0, "width": 120},
         {"label": _("Actual Qty"), "fieldname": "actual_qty",
          "fieldtype": "Float", "width": 100, "convertible": "qty"},
-        {"label": _("Planned Qty"), "fieldname": "planned_qty",
-         "fieldtype": "Float", "width": 100, "convertible": "qty"},
-        {"label": _("Requested Qty"), "fieldname": "indented_qty",
-         "fieldtype": "Float", "width": 110, "convertible": "qty"},
         {"label": _("Ordered Qty"), "fieldname": "ordered_qty",
          "fieldtype": "Float", "width": 100, "convertible": "qty"},
         {"label": _("Reserved Qty"), "fieldname": "reserved_qty",
-         "fieldtype": "Float", "width": 100, "convertible": "qty"},
-        {"label": _("Reserved for Production"), "fieldname": "reserved_qty_for_production", "fieldtype": "Float",
-         "width": 100, "convertible": "qty"},
-        {"label": _("Reserved for Sub Contracting"), "fieldname": "reserved_qty_for_sub_contract", "fieldtype": "Float",
-         "width": 100, "convertible": "qty"},
-        {"label": _("Reserved for POS Transactions"), "fieldname": "reserved_qty_for_pos", "fieldtype": "Float",
-         "width": 100, "convertible": "qty"},
-        {"label": _("Projected Qty"), "fieldname": "projected_qty",
-         "fieldtype": "Float", "width": 100, "convertible": "qty"},
-        {"label": _("Reorder Level"), "fieldname": "re_order_level",
-         "fieldtype": "Float", "width": 100, "convertible": "qty"},
-        {"label": _("Reorder Qty"), "fieldname": "re_order_qty",
-         "fieldtype": "Float", "width": 100, "convertible": "qty"},
-        {"label": _("Shortage Qty"), "fieldname": "shortage_qty",
          "fieldtype": "Float", "width": 100, "convertible": "qty"}
     ]
 
@@ -128,8 +106,6 @@ def get_bin_list(filters):
     if filters.item_code:
         conditions.append("item_code = '%s' " % filters.item_code)
 
-    actual_qty = filters.get("available_qty", 1)
-
     if filters.warehouse:
         warehouse_details = frappe.db.get_value(
             "Warehouse", filters.warehouse, ["lft", "rgt"], as_dict=1)
@@ -139,15 +115,17 @@ def get_bin_list(filters):
 				where wh.lft >= %s and wh.rgt <= %s and bin.warehouse = wh.name)" % (warehouse_details.lft,
                                                                          warehouse_details.rgt))
 
+    actual_qty = filters.get("available_qty", 1)
+
     bin_list = frappe.db.sql("""select item_code, warehouse, actual_qty, planned_qty, indented_qty,
-		ordered_qty, reserved_qty, reserved_qty_for_production, reserved_qty_for_sub_contract, projected_qty
+		ordered_qty, reserved_qty, reserved_qty_for_production, valuation_rate, reserved_qty_for_sub_contract, projected_qty
 		from tabBin bin where actual_qty >= {actual_qty} and actual_qty > 0 {conditions} order by item_code, warehouse
-		""".format(actual_qty=actual_qty, conditions=" where " + " and ".join(conditions) if conditions else ""), as_dict=1)
+		""".format(actual_qty=actual_qty, conditions=" and " + " and ".join(conditions) if conditions else ""), as_dict=1)
 
     return bin_list
 
 
-def get_item_map(item_code, include_uom, filters):
+def get_item_map(item_code, include_uom,filters):
     """Optimization: get only the item doc and re_order_levels table"""
 
     condition = ""
@@ -155,38 +133,26 @@ def get_item_map(item_code, include_uom, filters):
         condition = 'and item_code = {0}'.format(
             frappe.db.escape(item_code, percent=False))
 
+    if filters.get("selling_rate"):condition += 'and price_list_rate <= {selling_rate}'.format(selling_rate=filters.get("selling_rate"))
+    if filters.get("s_item_name"):condition += 'and item.item_name like "%%{s_item_name}%%"'.format(s_item_name=filters.get("s_item_name"))
+    
     cf_field = cf_join = ""
     if include_uom:
         cf_field = ", ucd.conversion_factor"
         cf_join = "left join `tabUOM Conversion Detail` ucd on ucd.parent=item.name and ucd.uom=%(include_uom)s"
 
-    std_rate = filters.get("standard_rate")
-    if std_rate:
-        items = frappe.db.sql("""
-			select item.name, item.item_name, item.description, item.standard_rate, item.item_group, item.item_category, item.brand, item.stock_uom{cf_field}
-			from `tabItem` item
-			{cf_join}
-			where item.is_stock_item = 1
-			and item.disabled=0
-			{condition}
-			and (item.end_of_life > %(today)s or item.end_of_life is null or item.end_of_life='0000-00-00')
-			and item.standard_rate <= {std_rate}
-			and exists (select name from `tabBin` bin where bin.item_code=item.name)"""
-                              .format(cf_field=cf_field, cf_join=cf_join, std_rate=std_rate, condition=condition),
-                              {"today": today(), "include_uom": include_uom}, as_dict=True)
-
-    else:
-        items = frappe.db.sql("""
-		select item.name, item.item_name, item.description, item.standard_rate, item.item_group, item.item_category, item.brand, item.stock_uom{cf_field}
+    items = frappe.db.sql("""
+		select item.name, item.item_name, item.description, item.item_group,item.item_category, item.brand, item.stock_uom{cf_field},pr.price_list_rate
 		from `tabItem` item
+        left join `tabItem Price` pr on pr.item_code=item.item_code and pr.selling = 1
 		{cf_join}
 		where item.is_stock_item = 1
 		and item.disabled=0
 		{condition}
 		and (item.end_of_life > %(today)s or item.end_of_life is null or item.end_of_life='0000-00-00')
 		and exists (select name from `tabBin` bin where bin.item_code=item.name)"""
-                              .format(cf_field=cf_field, cf_join=cf_join, condition=condition),
-                              {"today": today(), "include_uom": include_uom}, as_dict=True)
+                          .format(cf_field=cf_field, cf_join=cf_join, condition=condition),
+                          {"today": today(), "include_uom": include_uom}, as_dict=True)
 
     condition = ""
     if item_code:
