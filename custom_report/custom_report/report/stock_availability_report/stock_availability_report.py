@@ -85,8 +85,8 @@ def get_columns():
          "fieldtype": "Link", "options": "Item Price", "width": 140},
         {"label": _("Valuation Rate"), "fieldname": "valuation_rate",
          "fieldtype": "Link", "options": "Bin", "width": 140},
-        {"label": _("Item Categories"), "fieldname": "item_category",
-         "fieldtype": "Link", "options": "Item Group", "width": 130},
+        {"label": _("Item Category"), "fieldname": "item_category",
+         "fieldtype": "Link", "options": "Item Category", "width": 130},
         {"label": _("Brand"), "fieldname": "brand",
          "fieldtype": "Link", "options": "Brand", "width": 100},
         {"label": _("Warehouse"), "fieldname": "warehouse",
@@ -171,4 +171,4 @@ def get_item_map(item_code, include_uom,filters):
         item["reorder_levels"] = reorder_levels.get(item.name) or []
         item_map[item.name] = item
 
-    return item_map    return item_map
+    return item_map
