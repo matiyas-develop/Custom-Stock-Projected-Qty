@@ -132,9 +132,9 @@ def get_item_map(item_code, include_uom,filters):
     if item_code:
         condition = 'and item_code = {0}'.format(
             frappe.db.escape(item_code, percent=False))
-
+	conditions = ""
     if filters.get("selling_rate"):condition += 'and price_list_rate <= {selling_rate}'.format(selling_rate=filters.get("selling_rate"))
-    if filters.get("s_item_name"):condition += 'and item.item_name like "%%{s_item_name}%%"'.format(s_item_name=filters.get("s_item_name"))
+    if filters.get("s_item_name"):conditions += 'and item.item_name like "%%{s_item_name}%%"'.format(s_item_name=filters.get("s_item_name"))
     
     cf_field = cf_join = ""
     if include_uom:
@@ -149,9 +149,10 @@ def get_item_map(item_code, include_uom,filters):
 		where item.is_stock_item = 1
 		and item.disabled=0
 		{condition}
+		{conditions}
 		and (item.end_of_life > %(today)s or item.end_of_life is null or item.end_of_life='0000-00-00')
 		and exists (select name from `tabBin` bin where bin.item_code=item.name)"""
-                          .format(cf_field=cf_field, cf_join=cf_join, condition=condition),
+                          .format(cf_field=cf_field, cf_join=cf_join, conditions=conditions, condition=condition),
                           {"today": today(), "include_uom": include_uom}, as_dict=True)
 
     condition = ""
