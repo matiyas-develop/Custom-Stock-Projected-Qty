@@ -132,7 +132,8 @@ def get_item_map(item_code, include_uom,filters):
     if item_code:
         condition = 'and item_code = {0}'.format(
             frappe.db.escape(item_code, percent=False))
-	conditions = ""
+	
+    conditions = ""
     if filters.get("selling_rate"):condition += 'and price_list_rate <= {selling_rate}'.format(selling_rate=filters.get("selling_rate"))
     if filters.get("s_item_name"):conditions += 'and item.item_name like "%%{s_item_name}%%"'.format(s_item_name=filters.get("s_item_name"))
     
