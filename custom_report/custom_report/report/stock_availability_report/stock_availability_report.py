@@ -145,7 +145,7 @@ def get_item_map(item_code, include_uom,filters):
     items = frappe.db.sql("""
 		select item.name, item.item_name, item.description, item.item_group,item.item_category, item.brand, item.stock_uom{cf_field},pr.price_list_rate
 		from `tabItem` item
-        left join `tabItem Price` pr on pr.item_code=item.item_code and pr.selling = 1
+        left join `tabItem Price` pr on pr.item_code=item.item_code and pr.selling = 1 and pr.price_list = "Standard Selling"
 		{cf_join}
 		where item.is_stock_item = 1
 		and item.disabled=0
