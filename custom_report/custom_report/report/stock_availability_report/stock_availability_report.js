@@ -8,8 +8,7 @@ frappe.query_reports["Stock Availability Report"] = {
 			"fieldname":"company",
 			"label": __("Company"),
 			"fieldtype": "Link",
-			"options": "Company",
-			"default": frappe.defaults.get_user_default("Company")
+			"options": "Company"
 		},
 		{
 			"fieldname":"warehouse",
@@ -25,16 +24,9 @@ frappe.query_reports["Stock Availability Report"] = {
 			}
 		},
 		{
-			"fieldname":"item_code",
-			"label": __("Item"),
-			"fieldtype": "Link",
-			"hidden": 1,
-			"options": "Item",
-			"get_query": function() {
-				return {
-					query: "erpnext.controllers.queries.item_query"
-				}
-			}
+			"fieldname":"s_item_code",
+			"label": __("Item Code"),
+			"fieldtype": "Data"
 		},
 		{
 			"fieldname":"item_group",
